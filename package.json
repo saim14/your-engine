@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "echo \"No build steps defined yet\" && exit 0"
+    "build": "node scripts/run-stub.cjs build",
+    "lint": "node scripts/run-stub.cjs lint",
+    "format": "node scripts/run-stub.cjs format",
+    "test": "node scripts/run-stub.cjs test",
+    "validate": "npm run lint && npm run format && npm test && npm run build"
   }
 }
