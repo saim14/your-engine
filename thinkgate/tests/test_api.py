@@ -83,5 +83,26 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.json()["experiment_type"], "REAL_TRACE")
 
 
+    def test_calibrate_evaluate(self):
+        traces = []
+        for i in range(6):
+            base = 0.2 + i * 0.02
+            traces.append({
+                "task_id": f"cal-{i}",
+                "model": "example/model",
+                "prompt_hash": f"hash-{i}",
+                "initial_quality": base,
+                "steps": [
+                    {"step_index": 1, "quality": base + 0.28, "cost": 0.05},
+                    {"step_index": 2, "quality": base + 0.34, "cost": 0.08},
+                    {"step_index": 3, "quality": base + 0.35, "cost": 0.12},
+                ],
+            })
+        response = self.client.post("/api/calibrate-evaluate", json={"traces": traces})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["experiment_type"], "CALIBRATED_REAL_TRACE")
+        self.assertEqual(sum(response.json()["split"][k] for k in ("train", "tune", "eval")), 6)
+
+
 if __name__ == "__main__":
     unittest.main()
