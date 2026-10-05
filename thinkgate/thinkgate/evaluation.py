@@ -100,10 +100,11 @@ def evaluate_experiment(
     cost_denom = always.mean_cost if always.mean_cost > 1e-12 else 1.0
     cost_reduction = (always.mean_cost - adaptive.mean_cost) / cost_denom
 
+    eps = 1e-12
     gates = {
-        "utility_gain": utility_improvement >= min_utility_improvement,
-        "quality_retention": quality_drop <= max_quality_drop,
-        "cost_reduction": cost_reduction >= min_cost_reduction,
+        "utility_gain": utility_improvement + eps >= min_utility_improvement,
+        "quality_retention": quality_drop <= max_quality_drop + eps,
+        "cost_reduction": cost_reduction + eps >= min_cost_reduction,
     }
 
     return {
