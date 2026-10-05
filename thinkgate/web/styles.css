@@ -41,3 +41,7 @@ th:first-child, td:first-child { text-align: left; }
   .grid { grid-template-columns: 1fr; }
   .hero { flex-direction: column; }
 }
+
+.panel-head-actions { display: flex; gap: 8px; align-items: center; }
+select, input[type="file"] { background: #0f1116; color: #f4f5f7; border: 1px solid #333740; border-radius: 8px; padding: 8px; }
+input[type="file"] { width: 100%; margin: 8px 0 12px; }
