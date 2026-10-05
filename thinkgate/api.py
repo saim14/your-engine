@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from thinkgate.calibration import calibrate_and_evaluate
 from thinkgate.evaluation import evaluate_experiment
 from thinkgate.real_traces import to_evaluator_trace, validate_dataset
 
@@ -30,8 +31,8 @@ class EvaluateRequest(BaseModel):
 
 app = FastAPI(
     title="ThinkGate",
-    version="0.1.0",
-    description="Adaptive compute stop/continue experiment evaluator",
+    version="0.2.0",
+    description="Adaptive compute stop/continue evaluator with train/tune/eval calibration",
 )
 
 static_dir = Path(__file__).parent / "web"
@@ -45,7 +46,7 @@ def home() -> FileResponse:
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok", "service": "thinkgate"}
+    return {"status": "ok", "service": "thinkgate", "version": "0.2.0"}
 
 
 @app.post("/api/evaluate")
@@ -77,7 +78,16 @@ def evaluate_real(payload: dict) -> dict:
         report = evaluate_experiment(evaluator_traces, margin=margin)
         report["experiment_type"] = "REAL_TRACE"
         report["trace_count"] = len(validated)
-        report["validation"] = "real-trace schema passed"
+        report["validation"] = "real-trace schema passed; externally supplied predicted_gain used"
         return report
+    except (TypeError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/calibrate-evaluate")
+def calibrate_evaluate(payload: dict) -> dict:
+    traces = payload.get("traces", [])
+    try:
+        return calibrate_and_evaluate(traces)
     except (TypeError, ValueError, KeyError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
