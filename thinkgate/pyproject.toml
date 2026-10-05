@@ -1,7 +1,7 @@
 [project]
 name = "thinkgate"
-version = "0.2.0"
-description = "Adaptive-compute stop/continue evaluator with learned gain calibration"
+version = "0.3.0"
+description = "Adaptive-compute evaluator with learned calibration and real-trace collection"
 requires-python = ">=3.10"
 
 [build-system]
