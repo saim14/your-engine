@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ThinkGate</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Adaptive Compute Evaluator</p>
+        <h1>ThinkGate</h1>
+        <p class="sub">Test whether an AI system should keep thinking or stop now.</p>
+      </div>
+      <div id="status-pill" class="pill neutral">Not evaluated</div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Reasoning traces</h2>
+          <button id="load-example">Load example</button>
+        </div>
+        <p class="hint">Paste a JSON array of traces with quality, cost, and predicted_gain per step.</p>
+        <textarea id="trace-input" spellcheck="false"></textarea>
+        <div class="actions">
+          <label>Margin <input id="margin" type="number" step="0.01" value="0" /></label>
+          <button id="evaluate" class="primary">Evaluate</button>
+        </div>
+        <p id="error" class="error"></p>
+      </div>
+
+      <div class="panel">
+        <h2>Experiment result</h2>
+        <div id="summary" class="summary empty">Run an evaluation to see results.</div>
+        <div id="gates" class="gates"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Policy</th><th>Quality</th><th>Cost</th><th>Utility</th></tr>
+            </thead>
+            <tbody id="policy-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel note">
+      <h2>Interpretation</h2>
+      <p>This MVP evaluates saved traces only. A synthetic SUCCESS is a wiring check, not evidence that adaptive compute works on real LLM reasoning.</p>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
