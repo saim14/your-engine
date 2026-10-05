@@ -1,0 +1,46 @@
+{
+  "experiment_id": "openrouter-nemotron-pilot-2026-10-05",
+  "status": "SUCCESS",
+  "provider": "OpenRouter",
+  "model": "nvidia/nemotron-3.5-lightning:free",
+  "protocol": "pilot-numeric-v1",
+  "tasks": 12,
+  "steps": 48,
+  "mean_final_quality": 1,
+  "mean_total_cost": 1.042,
+  "mean_total_latency_ms": 106424.5,
+  "gates": {
+    "utility_gain": true,
+    "quality_retention": true,
+    "cost_reduction": true
+  },
+  "observed": {
+    "utility_improvement": 0.4448305821025195,
+    "quality_drop": 0,
+    "cost_reduction": 0.8445751181828663
+  },
+  "policies": {
+    "always_continue": {
+      "mean_quality": 1,
+      "mean_cost": 1.084125,
+      "mean_utility": -0.084125
+    },
+    "fixed_2": {
+      "mean_quality": 1,
+      "mean_cost": 0.4245,
+      "mean_utility": 0.5755
+    },
+    "thinkgate": {
+      "mean_quality": 1,
+      "mean_cost": 0.1685,
+      "mean_utility": 0.8315
+    }
+  },
+  "split": {
+    "train": 8,
+    "tune": 2,
+    "eval": 2
+  },
+  "selected_margin": 0,
+  "caveat": "All 12 tasks were correct at step 1; this validates the pipeline but does not yet test tasks where later reasoning improves quality."
+}
