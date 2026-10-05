@@ -1,0 +1,19 @@
+[
+  {
+    "task_id": "replace-with-task-id",
+    "model": "replace-with-model-name",
+    "prompt_hash": "sha256-of-original-prompt",
+    "initial_quality": 0,
+    "steps": [
+      {
+        "step_index": 1,
+        "quality": 0,
+        "cost": 0,
+        "predicted_gain": 0,
+        "latency_ms": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      }
+    ]
+  }
+]
