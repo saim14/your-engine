@@ -45,5 +45,43 @@ class ApiTests(unittest.TestCase):
         self.assertIn(response.json()["status"], {"SUCCESS", "FAILED"})
 
 
+    def test_evaluate_real(self):
+        response = self.client.post(
+            "/api/evaluate-real",
+            json={
+                "traces": [
+                    {
+                        "task_id": "real-1",
+                        "model": "example/model",
+                        "prompt_hash": "abc123",
+                        "initial_quality": 0.2,
+                        "steps": [
+                            {
+                                "step_index": 1,
+                                "quality": 0.7,
+                                "cost": 0.05,
+                                "predicted_gain": 0.3,
+                                "latency_ms": 100,
+                                "input_tokens": 10,
+                                "output_tokens": 20,
+                            },
+                            {
+                                "step_index": 2,
+                                "quality": 0.71,
+                                "cost": 0.2,
+                                "predicted_gain": 0.01,
+                                "latency_ms": 100,
+                                "input_tokens": 10,
+                                "output_tokens": 20,
+                            },
+                        ],
+                    }
+                ]
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["experiment_type"], "REAL_TRACE")
+
+
 if __name__ == "__main__":
     unittest.main()
