@@ -1,0 +1,152 @@
+[
+  {
+    "task_id": "pilot-001",
+    "prompt": "A warehouse starts with 480 units. It ships 37.5% of them, then receives 96 new units. How many units are now in the warehouse?",
+    "expected": 396
+  },
+  {
+    "task_id": "pilot-002",
+    "prompt": "A subscription costs 240 per year. A 15% discount is applied, then 8% tax is charged on the discounted price. What is the final price?",
+    "expected": 220.32
+  },
+  {
+    "task_id": "pilot-003",
+    "prompt": "A train travels 180 km in 2.5 hours and then 120 km in 1.5 hours. What is its average speed over the whole trip in km/h?",
+    "expected": 75
+  },
+  {
+    "task_id": "pilot-004",
+    "prompt": "A quantity increases from 320 to 392. What is the percentage increase?",
+    "expected": 22.5
+  },
+  {
+    "task_id": "pilot-005",
+    "prompt": "A project is 3/8 complete. After finishing another 35% of the total project, what percentage remains unfinished?",
+    "expected": 27.5
+  },
+  {
+    "task_id": "pilot-006",
+    "prompt": "An investment of 1250 grows by 12% and then falls by 10%. What is its final value?",
+    "expected": 1260
+  },
+  {
+    "task_id": "pilot-007",
+    "prompt": "Five machines each make 18 parts per hour. If efficiency rises by 20%, how many parts do all five make in 3 hours?",
+    "expected": 324
+  },
+  {
+    "task_id": "pilot-008",
+    "prompt": "A rectangle has perimeter 94 and length 29. What is its area?",
+    "expected": 522
+  },
+  {
+    "task_id": "pilot-009",
+    "prompt": "The mean of five numbers is 42. Four of the numbers are 31, 39, 44, and 48. What is the fifth number?",
+    "expected": 48
+  },
+  {
+    "task_id": "pilot-010",
+    "prompt": "A tank is 72% full and contains 540 liters. What is the tank's total capacity in liters?",
+    "expected": 750
+  },
+  {
+    "task_id": "pilot-011",
+    "prompt": "A store marks a 600 item up by 25% and then offers a 20% discount on the marked price. What is the selling price?",
+    "expected": 600
+  },
+  {
+    "task_id": "pilot-012",
+    "prompt": "If x + 3y = 29 and x - y = 9, what is x?",
+    "expected": 14
+  },
+  {
+    "task_id": "pilot-013",
+    "prompt": "A cyclist covers the first 30 km at 20 km/h and the next 30 km at 30 km/h. What is the average speed for the 60 km trip?",
+    "expected": 24
+  },
+  {
+    "task_id": "pilot-014",
+    "prompt": "A number is increased by 40% and becomes 196. What was the original number?",
+    "expected": 140
+  },
+  {
+    "task_id": "pilot-015",
+    "prompt": "A company has 250 employees. 18% leave, and then 41 new employees are hired. How many employees are there now?",
+    "expected": 246
+  },
+  {
+    "task_id": "pilot-016",
+    "prompt": "A 20-liter mixture is 30% concentrate. How many liters of pure concentrate must be added to make the mixture 50% concentrate?",
+    "expected": 8
+  },
+  {
+    "task_id": "pilot-017",
+    "prompt": "A loan of 9000 accrues simple interest at 6% per year for 2.5 years. What is the total amount owed?",
+    "expected": 10350
+  },
+  {
+    "task_id": "pilot-018",
+    "prompt": "Three consecutive integers sum to 147. What is the largest integer?",
+    "expected": 50
+  },
+  {
+    "task_id": "pilot-019",
+    "prompt": "A car uses 7.5 liters per 100 km. How many liters will it use over 460 km?",
+    "expected": 34.5
+  },
+  {
+    "task_id": "pilot-020",
+    "prompt": "A team completes 45% of a task on Monday and 30% of the remaining task on Tuesday. What percentage of the original task remains?",
+    "expected": 38.5
+  },
+  {
+    "task_id": "pilot-021",
+    "prompt": "A square's area is 324. What is its perimeter?",
+    "expected": 72
+  },
+  {
+    "task_id": "pilot-022",
+    "prompt": "An item costs 84 after a 30% discount. What was the original price?",
+    "expected": 120
+  },
+  {
+    "task_id": "pilot-023",
+    "prompt": "A population of 8000 grows by 5% per year for two years. What is the population after two years?",
+    "expected": 8820
+  },
+  {
+    "task_id": "pilot-024",
+    "prompt": "A runner completes 12.5 km in 62.5 minutes. What is the average speed in km/h?",
+    "expected": 12
+  },
+  {
+    "task_id": "pilot-025",
+    "prompt": "A class has a ratio of 3 boys to 5 girls and 32 students total. How many girls are there?",
+    "expected": 20
+  },
+  {
+    "task_id": "pilot-026",
+    "prompt": "A pipe fills a tank in 6 hours and another pipe fills it in 12 hours. Working together, how many hours do they take to fill the tank?",
+    "expected": 4
+  },
+  {
+    "task_id": "pilot-027",
+    "prompt": "A product's price goes from 250 to 300 and then back to 250. What is the percentage decrease from 300 to 250?",
+    "expected": 16.6666666667
+  },
+  {
+    "task_id": "pilot-028",
+    "prompt": "A worker earns 18 per hour for 35 regular hours and 1.5 times that rate for 6 overtime hours. What is the total pay?",
+    "expected": 792
+  },
+  {
+    "task_id": "pilot-029",
+    "prompt": "A circle has radius 7. Using pi = 22/7, what is its area?",
+    "expected": 154
+  },
+  {
+    "task_id": "pilot-030",
+    "prompt": "A recipe for 8 servings uses 300 grams of flour. How many grams are needed for 14 servings?",
+    "expected": 525
+  }
+]
