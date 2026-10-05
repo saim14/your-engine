@@ -1,7 +1,7 @@
 {
-  "experiment_id": "real-trace-v2-calibrated",
-  "status": "IMPLEMENTED_AWAITING_REAL_EVIDENCE",
-  "objective": "Test whether a learned ThinkGate policy can reduce compute cost while preserving answer quality on genuine multi-step LLM traces.",
+  "experiment_id": "real-trace-v3-pilot-collection",
+  "status": "COLLECTION_PROTOCOL_FROZEN_AWAITING_PROVIDER_KEY",
+  "objective": "Collect genuine multi-step LLM traces under a frozen pilot protocol, then test whether learned ThinkGate decisions reduce compute while preserving quality.",
   "frozen_gates": {
     "min_utility_improvement": 0.05,
     "max_quality_drop": 0.01,
@@ -11,6 +11,20 @@
     "always_continue",
     "fixed_2"
   ],
+  "collection_protocol": {
+    "name": "pilot-numeric-v1",
+    "benchmark_tasks": 30,
+    "task_family": "deterministic numeric reasoning",
+    "max_steps": 4,
+    "temperature": 0,
+    "answer_contract": "Each response ends with FINAL: <number>",
+    "refinement_prompt": "Review the previous answer for arithmetic, reasoning, or interpretation errors and improve it if needed.",
+    "quality_scorer": "graded_numeric_v1: exact answer=1; otherwise 1/(1+relative_error); missing FINAL=0",
+    "cost_scorer": "step total tokens / 4000-token task budget",
+    "latency_policy": "recorded for analysis but not included in pilot utility cost",
+    "provider_interface": "OpenAI-compatible /chat/completions",
+    "claim_policy": "Pilot validates end-to-end collection/calibration only; it is not broad evidence of general adaptive-compute performance."
+  },
   "controller": {
     "decision_rule": "CONTINUE iff predicted_gain - next_step_cost > margin",
     "gain_source": "ridge_linear_v1 trained on train split",
@@ -34,17 +48,6 @@
     "implementation": "stable SHA-256 ordering by task_id",
     "leakage_rule": "All steps from the same task_id remain in one split."
   },
-  "quality_policy": {
-    "range": [
-      0,
-      1
-    ],
-    "requirement": "Quality scoring must be declared before evaluation and must not use controller decisions."
-  },
-  "cost_policy": {
-    "definition": "normalized model compute cost derived from tokens and/or latency",
-    "requirement": "conversion must be frozen before final evaluation"
-  },
   "success_rule": "SUCCESS only if all three frozen gates pass on the untouched eval split.",
-  "evidence_status": "No real-world performance claim until genuine held-out traces have been collected and evaluated."
+  "evidence_status": "No real-world performance claim until genuine provider-generated traces are collected and evaluated."
 }
