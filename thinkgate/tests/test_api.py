@@ -104,5 +104,13 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(sum(response.json()["split"][k] for k in ("train", "tune", "eval")), 6)
 
 
+    def test_collection_protocol(self):
+        response = self.client.get("/api/collection-protocol")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["protocol"], "pilot-numeric-v1")
+        self.assertEqual(data["benchmark_tasks"], 30)
+
+
 if __name__ == "__main__":
     unittest.main()
