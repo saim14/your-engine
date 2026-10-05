@@ -60,6 +60,23 @@ const realTemplate = [
   }
 ];
 
+function calibratedExample() {
+  return Array.from({ length: 6 }, (_, i) => {
+    const base = 0.18 + i * 0.02;
+    return {
+      task_id: "task-00" + (i + 1),
+      model: "provider/model-name",
+      prompt_hash: "example-hash-" + (i + 1),
+      initial_quality: base,
+      steps: [
+        { step_index: 1, quality: base + 0.28, cost: 0.05, latency_ms: 900, input_tokens: 120, output_tokens: 80 },
+        { step_index: 2, quality: base + 0.34, cost: 0.08, latency_ms: 1100, input_tokens: 180, output_tokens: 110 },
+        { step_index: 3, quality: base + 0.35, cost: 0.12, latency_ms: 1300, input_tokens: 220, output_tokens: 130 }
+      ]
+    };
+  });
+}
+
 function pct(x) {
   return (x * 100).toFixed(2) + "%";
 }
@@ -69,20 +86,33 @@ function num(x) {
 }
 
 function loadExample() {
-  const real = mode.value === "real";
-  input.value = JSON.stringify(real ? realTemplate : syntheticExample, null, 2);
+  const selected = mode.value;
+  const template = selected === "calibrated"
+    ? calibratedExample()
+    : (selected === "real" ? realTemplate : syntheticExample);
+  input.value = JSON.stringify(template, null, 2);
 }
 
 function syncMode() {
-  const real = mode.value === "real";
-  badge.textContent = real ? "Real trace" : "Synthetic";
+  const selected = mode.value;
+  badge.textContent = selected === "calibrated"
+    ? "Calibrated"
+    : (selected === "real" ? "Real trace" : "Synthetic");
   badge.className = "pill neutral";
-  hint.textContent = real
-    ? "Real trace mode: task_id, model, prompt_hash, initial_quality and contiguous step_index values are required."
-    : "Synthetic demo: paste evaluator traces directly.";
-  interpretation.textContent = real
-    ? "Real mode validates trace provenance fields before running the frozen ThinkGate gates. A pass is only meaningful on genuinely collected, untouched evaluation traces."
-    : "Synthetic SUCCESS is a wiring check. Switch to Real trace mode for preregistered evaluation of externally collected LLM traces.";
+
+  if (selected === "calibrated") {
+    hint.textContent = "Upload at least 5 observed task traces. predicted_gain is learned from train traces and must not be supplied.";
+    interpretation.textContent = "Calibrated mode learns predicted gain on train traces, selects the decision margin on tune traces, and applies the frozen success gates only to held-out eval traces.";
+    document.getElementById("margin").disabled = true;
+  } else if (selected === "real") {
+    hint.textContent = "Real trace mode requires task_id, model, prompt_hash, initial_quality, contiguous step_index values, and externally supplied predicted_gain.";
+    interpretation.textContent = "Real mode validates trace provenance fields before running the frozen ThinkGate gates. A pass is meaningful only on genuinely collected, untouched evaluation traces.";
+    document.getElementById("margin").disabled = false;
+  } else {
+    hint.textContent = "Synthetic demo: paste evaluator traces directly.";
+    interpretation.textContent = "Synthetic SUCCESS is a wiring check. Use calibrated mode to test a learned predicted-gain policy on held-out traces.";
+    document.getElementById("margin").disabled = false;
+  }
   loadExample();
 }
 
@@ -92,9 +122,15 @@ function render(report) {
   statusPill.className = "pill " + (success ? "success" : "failed");
 
   summary.className = "summary";
-  const extra = report.experiment_type === "REAL_TRACE"
-    ? "<br>Mode: <code>REAL_TRACE</code> · Traces: " + report.trace_count + " · " + report.validation
-    : "";
+  let extra = "";
+  if (report.experiment_type === "REAL_TRACE") {
+    extra = "<br>Mode: <code>REAL_TRACE</code> · Traces: " + report.trace_count + " · " + report.validation;
+  } else if (report.experiment_type === "CALIBRATED_REAL_TRACE") {
+    extra = "<br>Mode: <code>CALIBRATED_REAL_TRACE</code> · Split: " +
+      report.split.train + "/" + report.split.tune + "/" + report.split.eval +
+      " · Margin: " + report.selected_margin + "<br>" + report.validation;
+  }
+
   summary.innerHTML =
     "<strong>" + report.status + "</strong><br>" +
     "Stronger baseline: <code>" + report.stronger_baseline + "</code><br>" +
@@ -166,10 +202,12 @@ document.getElementById("evaluate").addEventListener("click", async function() {
   }
 
   try {
-    const real = mode.value === "real";
-    const endpoint = real ? "/api/evaluate-real" : "/api/evaluate";
-    const body = real
-      ? { traces: traces, margin: Number(document.getElementById("margin").value || 0) }
+    const selected = mode.value;
+    const endpoint = selected === "calibrated"
+      ? "/api/calibrate-evaluate"
+      : (selected === "real" ? "/api/evaluate-real" : "/api/evaluate");
+    const body = selected === "calibrated"
+      ? { traces: traces }
       : { traces: traces, margin: Number(document.getElementById("margin").value || 0) };
 
     const response = await fetch(endpoint, {
