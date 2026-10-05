@@ -1,0 +1,37 @@
+{
+  "experiment_id": "real-trace-v1",
+  "status": "PRE_REGISTERED",
+  "objective": "Test whether ThinkGate can reduce compute cost while preserving answer quality on real multi-step LLM traces.",
+  "frozen_gates": {
+    "min_utility_improvement": 0.05,
+    "max_quality_drop": 0.01,
+    "min_cost_reduction": 0.1
+  },
+  "baselines": [
+    "always_continue",
+    "fixed_2"
+  ],
+  "controller": {
+    "decision_rule": "CONTINUE iff predicted_gain - next_step_cost > margin",
+    "margin": 0
+  },
+  "split_policy": {
+    "unit": "task_id",
+    "train": 0.6,
+    "tune": 0.2,
+    "eval": 0.2,
+    "leakage_rule": "All steps from the same task_id must remain in one split."
+  },
+  "quality_policy": {
+    "range": [
+      0,
+      1
+    ],
+    "requirement": "Quality scoring must be declared before evaluation and must not use controller decisions."
+  },
+  "cost_policy": {
+    "definition": "normalized model compute cost derived from tokens and/or latency",
+    "requirement": "conversion must be frozen before final evaluation"
+  },
+  "success_rule": "SUCCESS only if all three frozen gates pass on the untouched eval split."
+}
