@@ -1,7 +1,7 @@
 {
-  "experiment_id": "real-trace-v1",
-  "status": "PRE_REGISTERED",
-  "objective": "Test whether ThinkGate can reduce compute cost while preserving answer quality on real multi-step LLM traces.",
+  "experiment_id": "real-trace-v2-calibrated",
+  "status": "IMPLEMENTED_AWAITING_REAL_EVIDENCE",
+  "objective": "Test whether a learned ThinkGate policy can reduce compute cost while preserving answer quality on genuine multi-step LLM traces.",
   "frozen_gates": {
     "min_utility_improvement": 0.05,
     "max_quality_drop": 0.01,
@@ -13,14 +13,26 @@
   ],
   "controller": {
     "decision_rule": "CONTINUE iff predicted_gain - next_step_cost > margin",
-    "margin": 0
+    "gain_source": "ridge_linear_v1 trained on train split",
+    "margin_source": "selected on tune split only"
+  },
+  "estimator": {
+    "features": [
+      "current_quality",
+      "step_index",
+      "previous_observed_gain",
+      "previous_cost"
+    ],
+    "ridge": 0.001,
+    "leakage_rule": "No eval task contributes to estimator fitting or margin selection."
   },
   "split_policy": {
     "unit": "task_id",
     "train": 0.6,
     "tune": 0.2,
     "eval": 0.2,
-    "leakage_rule": "All steps from the same task_id must remain in one split."
+    "implementation": "stable SHA-256 ordering by task_id",
+    "leakage_rule": "All steps from the same task_id remain in one split."
   },
   "quality_policy": {
     "range": [
@@ -33,5 +45,6 @@
     "definition": "normalized model compute cost derived from tokens and/or latency",
     "requirement": "conversion must be frozen before final evaluation"
   },
-  "success_rule": "SUCCESS only if all three frozen gates pass on the untouched eval split."
+  "success_rule": "SUCCESS only if all three frozen gates pass on the untouched eval split.",
+  "evidence_status": "No real-world performance claim until genuine held-out traces have been collected and evaluated."
 }
