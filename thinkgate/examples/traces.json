@@ -1,0 +1,20 @@
+[
+  {
+    "id": "trace-1",
+    "initial_quality": 0.40,
+    "steps": [
+      {"quality": 0.66, "cost": 0.05, "predicted_gain": 0.24},
+      {"quality": 0.67, "cost": 0.16, "predicted_gain": 0.02},
+      {"quality": 0.68, "cost": 0.16, "predicted_gain": 0.01}
+    ]
+  },
+  {
+    "id": "trace-2",
+    "initial_quality": 0.52,
+    "steps": [
+      {"quality": 0.78, "cost": 0.05, "predicted_gain": 0.22},
+      {"quality": 0.79, "cost": 0.15, "predicted_gain": 0.01},
+      {"quality": 0.80, "cost": 0.15, "predicted_gain": 0.01}
+    ]
+  }
+]
