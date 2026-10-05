@@ -179,3 +179,78 @@ def hf_probe(key: str) -> dict:
             except Exception as exc:
                 results.append({"model": model, "error": repr(exc)})
     return {"task_expected": 396, "results": results}
+
+
+def _startup_hf_probe() -> None:
+    import json
+    import os
+    import threading
+    import time
+    import httpx
+
+    if os.environ.get("THINKGATE_RUN_STARTUP_PROBE") != "1":
+        return
+
+    def run() -> None:
+        api_key = os.environ.get("THINKGATE_API_KEY")
+        base_url = os.environ.get("THINKGATE_BASE_URL", "https://router.huggingface.co/v1").rstrip("/")
+        if not api_key:
+            print("THINKGATE_HF_STARTUP_PROBE " + json.dumps({"error": "missing THINKGATE_API_KEY"}), flush=True)
+            return
+        models = [
+            "Qwen/Qwen3-4B-Instruct-2507:nscale",
+            "google/gemma-3-4b-it:deepinfra",
+            "openai/gpt-oss-20b:deepinfra",
+        ]
+        prompt = (
+            "Solve carefully and end with exactly FINAL: <number>. "
+            "A warehouse starts with 480 units. It ships 37.5% of them, "
+            "then receives 96 new units. How many units are now in the warehouse?"
+        )
+        with httpx.Client(timeout=60.0) as client:
+            for model in models:
+                started = time.perf_counter()
+                try:
+                    response = client.post(
+                        base_url + "/chat/completions",
+                        headers={
+                            "Authorization": "Bearer " + api_key,
+                            "Content-Type": "application/json",
+                        },
+                        json={
+                            "model": model,
+                            "messages": [{"role": "user", "content": prompt}],
+                            "temperature": 0,
+                        },
+                    )
+                    latency_ms = int((time.perf_counter() - started) * 1000)
+                    try:
+                        payload = response.json()
+                    except Exception:
+                        payload = {"raw": response.text[:300]}
+                    if response.is_success:
+                        message = payload["choices"][0]["message"]["content"]
+                        record = {
+                            "model": model,
+                            "status": response.status_code,
+                            "latency_ms": latency_ms,
+                            "answer_tail": message[-160:],
+                            "usage": payload.get("usage", {}),
+                        }
+                    else:
+                        record = {
+                            "model": model,
+                            "status": response.status_code,
+                            "latency_ms": latency_ms,
+                            "error": str(payload)[:400],
+                        }
+                    print("THINKGATE_HF_STARTUP_PROBE " + json.dumps(record, ensure_ascii=False), flush=True)
+                except Exception as exc:
+                    print("THINKGATE_HF_STARTUP_PROBE " + json.dumps({"model": model, "error": repr(exc)}), flush=True)
+
+    threading.Thread(target=run, daemon=True).start()
+
+
+@app.on_event("startup")
+def startup_probe_event() -> None:
+    _startup_hf_probe()
