@@ -111,3 +111,71 @@ def collection_protocol() -> dict:
         "optional_env": ["THINKGATE_BASE_URL", "THINKGATE_MAX_STEPS"],
         "claim_policy": "Pilot traces validate the collection and calibration pipeline; they are not broad evidence of general adaptive-compute performance.",
     }
+
+
+@app.get("/api/internal/hf-probe")
+def hf_probe(key: str) -> dict:
+    import os
+    import time
+    import httpx
+
+    expected_key = os.environ.get("THINKGATE_PROBE_KEY")
+    if not expected_key or key != expected_key:
+        raise HTTPException(status_code=404, detail="not found")
+
+    api_key = os.environ.get("THINKGATE_API_KEY")
+    base_url = os.environ.get("THINKGATE_BASE_URL", "https://router.huggingface.co/v1").rstrip("/")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="model API credential is not configured")
+
+    models = [
+        "Qwen/Qwen3-4B-Instruct-2507:nscale",
+        "google/gemma-3-4b-it:deepinfra",
+        "openai/gpt-oss-20b:deepinfra",
+    ]
+    prompt = (
+        "Solve carefully and end with exactly FINAL: <number>. "
+        "A warehouse starts with 480 units. It ships 37.5% of them, "
+        "then receives 96 new units. How many units are now in the warehouse?"
+    )
+    results = []
+    with httpx.Client(timeout=90.0) as client:
+        for model in models:
+            started = time.perf_counter()
+            try:
+                response = client.post(
+                    base_url + "/chat/completions",
+                    headers={
+                        "Authorization": "Bearer " + api_key,
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": model,
+                        "messages": [{"role": "user", "content": prompt}],
+                        "temperature": 0,
+                    },
+                )
+                latency_ms = int((time.perf_counter() - started) * 1000)
+                try:
+                    payload = response.json()
+                except Exception:
+                    payload = {"raw": response.text[:300]}
+                if response.is_success:
+                    message = payload["choices"][0]["message"]["content"]
+                    results.append({
+                        "model": model,
+                        "status": response.status_code,
+                        "latency_ms": latency_ms,
+                        "answer_tail": message[-160:],
+                        "usage": payload.get("usage", {}),
+                    })
+                else:
+                    results.append({
+                        "model": model,
+                        "status": response.status_code,
+                        "latency_ms": latency_ms,
+                        "error": str(payload)[:400],
+                    })
+            except Exception as exc:
+                results.append({"model": model, "error": repr(exc)})
+    return {"task_expected": 396, "results": results}
