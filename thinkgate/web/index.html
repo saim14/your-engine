@@ -22,7 +22,7 @@
       <div class="panel">
         <div class="panel-head">
           <h2>Reasoning traces</h2>
-          <div class="panel-head-actions"><select id="mode"><option value="synthetic">Synthetic demo</option><option value="real">Real trace</option></select><button id="load-example">Load example</button></div>
+          <div class="panel-head-actions"><select id="mode"><option value="synthetic">Synthetic demo</option><option value="real">Real trace</option><option value="calibrated">Calibrated real trace</option></select><button id="load-example">Load example</button></div>
         </div>
         <p id="mode-hint" class="hint">Synthetic demo: paste evaluator traces directly.</p>
         <input id="trace-file" type="file" accept=".json,application/json" />
@@ -51,7 +51,7 @@
 
     <section class="panel note">
       <h2>Interpretation</h2>
-      <p id="interpretation">Synthetic SUCCESS is a wiring check. Switch to Real trace mode for preregistered evaluation of externally collected LLM traces.</p>
+      <p id="interpretation">Synthetic SUCCESS is a wiring check. Calibrated real-trace mode learns predicted gain on train traces, tunes the decision margin separately, and evaluates frozen gates only on held-out traces.</p>
     </section>
   </main>
   <script src="/static/app.js"></script>
