@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from thinkgate.calibration import calibrate_and_evaluate
 from thinkgate.evaluation import evaluate_experiment
 from thinkgate.real_traces import to_evaluator_trace, validate_dataset
+from thinkgate.pilot_runner import start_pilot_background
 
 
 class Step(BaseModel):
@@ -113,3 +114,10 @@ def collection_protocol() -> dict:
     }
 
 
+
+
+@app.on_event("startup")
+def maybe_start_hf_pilot() -> None:
+    import os
+    if os.environ.get("THINKGATE_RUN_PILOT") == "1":
+        start_pilot_background()
