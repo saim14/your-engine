@@ -31,8 +31,8 @@ class EvaluateRequest(BaseModel):
 
 app = FastAPI(
     title="ThinkGate",
-    version="0.2.0",
-    description="Adaptive compute stop/continue evaluator with train/tune/eval calibration",
+    version="0.3.0",
+    description="Adaptive compute stop/continue evaluator with calibrated real-trace collection",
 )
 
 static_dir = Path(__file__).parent / "web"
@@ -46,7 +46,7 @@ def home() -> FileResponse:
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok", "service": "thinkgate", "version": "0.2.0"}
+    return {"status": "ok", "service": "thinkgate", "version": "0.3.0"}
 
 
 @app.post("/api/evaluate")
@@ -91,3 +91,23 @@ def calibrate_evaluate(payload: dict) -> dict:
         return calibrate_and_evaluate(traces)
     except (TypeError, ValueError, KeyError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/api/collection-protocol")
+def collection_protocol() -> dict:
+    import json
+    benchmark_path = Path(__file__).parent / "benchmarks" / "pilot_numeric_v1.json"
+    tasks = json.loads(benchmark_path.read_text(encoding="utf-8"))
+    return {
+        "protocol": "pilot-numeric-v1",
+        "status": "FROZEN_FOR_PILOT_COLLECTION",
+        "benchmark_tasks": len(tasks),
+        "max_steps": 4,
+        "temperature": 0,
+        "quality_scorer": "graded_numeric_v1",
+        "cost_scorer": "step total tokens / 4000-token task budget",
+        "collector": "OpenAI-compatible /chat/completions endpoint",
+        "required_env": ["THINKGATE_API_KEY", "THINKGATE_MODEL"],
+        "optional_env": ["THINKGATE_BASE_URL", "THINKGATE_MAX_STEPS"],
+        "claim_policy": "Pilot traces validate the collection and calibration pipeline; they are not broad evidence of general adaptive-compute performance.",
+    }
