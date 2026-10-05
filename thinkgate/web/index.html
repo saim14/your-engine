@@ -22,9 +22,10 @@
       <div class="panel">
         <div class="panel-head">
           <h2>Reasoning traces</h2>
-          <button id="load-example">Load example</button>
+          <div class="panel-head-actions"><select id="mode"><option value="synthetic">Synthetic demo</option><option value="real">Real trace</option></select><button id="load-example">Load example</button></div>
         </div>
-        <p class="hint">Paste a JSON array of traces with quality, cost, and predicted_gain per step.</p>
+        <p id="mode-hint" class="hint">Synthetic demo: paste evaluator traces directly.</p>
+        <input id="trace-file" type="file" accept=".json,application/json" />
         <textarea id="trace-input" spellcheck="false"></textarea>
         <div class="actions">
           <label>Margin <input id="margin" type="number" step="0.01" value="0" /></label>
@@ -34,7 +35,7 @@
       </div>
 
       <div class="panel">
-        <h2>Experiment result</h2>
+        <h2>Experiment result <span id="experiment-badge" class="pill neutral">Synthetic</span></h2>
         <div id="summary" class="summary empty">Run an evaluation to see results.</div>
         <div id="gates" class="gates"></div>
         <div class="table-wrap">
@@ -50,7 +51,7 @@
 
     <section class="panel note">
       <h2>Interpretation</h2>
-      <p>This MVP evaluates saved traces only. A synthetic SUCCESS is a wiring check, not evidence that adaptive compute works on real LLM reasoning.</p>
+      <p id="interpretation">Synthetic SUCCESS is a wiring check. Switch to Real trace mode for preregistered evaluation of externally collected LLM traces.</p>
     </section>
   </main>
   <script src="/static/app.js"></script>
