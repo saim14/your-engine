@@ -1,0 +1,42 @@
+{
+  "experiment_id": "hf-connectivity-smoke-2026-10-05",
+  "status": "COMPLETED",
+  "task": "warehouse arithmetic smoke test",
+  "expected_final": 396,
+  "endpoint": "Hugging Face Inference Providers via OpenAI-compatible router",
+  "note": "Single-task connectivity smoke test only; not evidence for ThinkGate adaptive-compute performance.",
+  "results": [
+    {
+      "model": "Qwen/Qwen3-4B-Instruct-2507:nscale",
+      "http_status": 200,
+      "latency_ms": 1365,
+      "prompt_tokens": 58,
+      "completion_tokens": 170,
+      "total_tokens": 228,
+      "final": 396,
+      "correct": true
+    },
+    {
+      "model": "google/gemma-3-4b-it:deepinfra",
+      "http_status": 200,
+      "latency_ms": 6558,
+      "prompt_tokens": 58,
+      "completion_tokens": 230,
+      "total_tokens": 288,
+      "estimated_cost_usd": 0.0000259,
+      "final": 396,
+      "correct": true
+    },
+    {
+      "model": "openai/gpt-oss-20b:deepinfra",
+      "http_status": 200,
+      "latency_ms": 1235,
+      "prompt_tokens": 99,
+      "completion_tokens": 126,
+      "total_tokens": 225,
+      "estimated_cost_usd": 0.00002061,
+      "final": 396,
+      "correct": true
+    }
+  ]
+}
