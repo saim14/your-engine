@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import hmac
 import os
+import sqlite3
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass
+from pathlib import Path
 from threading import Lock
 
 from thinkgate.controller import decide
@@ -17,11 +19,11 @@ class AuthContext:
 
 
 class PilotGateway:
-    """Small in-process gateway for the first production pilots.
+    """Small production gateway for ThinkGate pilots.
 
-    Customer keys and counters intentionally stay outside model logic. Railway
-    instances are ephemeral, so counters are pilot telemetry rather than billing
-    records; persistent metering should replace this before paid GA.
+    Authentication and rate limiting remain in-process. Usage metering is
+    persisted to SQLite when THINKGATE_USAGE_DB_PATH is configured; otherwise
+    it falls back to in-memory counters for local development and tests.
     """
 
     def __init__(self) -> None:
@@ -44,9 +46,7 @@ class PilotGateway:
         result: dict[str, str] = {}
         for entry in raw.split(","):
             entry = entry.strip()
-            if not entry:
-                continue
-            if ":" not in entry:
+            if not entry or ":" not in entry:
                 continue
             customer_id, key = entry.split(":", 1)
             customer_id = customer_id.strip()
@@ -54,6 +54,113 @@ class PilotGateway:
             if customer_id and key:
                 result[customer_id] = key
         return result
+
+    @staticmethod
+    def _db_path() -> str | None:
+        value = os.environ.get("THINKGATE_USAGE_DB_PATH", "").strip()
+        return value or None
+
+    def _ensure_db(self, db_path: str) -> None:
+        path = Path(db_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with sqlite3.connect(db_path, timeout=5.0) as conn:
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS usage (
+                    customer_id TEXT PRIMARY KEY,
+                    requests INTEGER NOT NULL DEFAULT 0,
+                    continue_count INTEGER NOT NULL DEFAULT 0,
+                    stop_count INTEGER NOT NULL DEFAULT 0,
+                    estimated_avoided_cost REAL NOT NULL DEFAULT 0.0,
+                    updated_at INTEGER NOT NULL DEFAULT 0
+                )
+                """
+            )
+            conn.commit()
+
+    def _record_usage(
+        self,
+        *,
+        customer_id: str,
+        decision: str,
+        estimated_avoided_cost: float,
+    ) -> None:
+        db_path = self._db_path()
+        if not db_path:
+            with self._lock:
+                row = self._usage[customer_id]
+                row["requests"] += 1
+                row["continue" if decision == "CONTINUE" else "stop"] += 1
+                row["estimated_avoided_cost"] += estimated_avoided_cost
+            return
+
+        self._ensure_db(db_path)
+        continue_inc = 1 if decision == "CONTINUE" else 0
+        stop_inc = 1 if decision == "STOP" else 0
+        with self._lock:
+            with sqlite3.connect(db_path, timeout=5.0) as conn:
+                conn.execute(
+                    """
+                    INSERT INTO usage (
+                        customer_id,
+                        requests,
+                        continue_count,
+                        stop_count,
+                        estimated_avoided_cost,
+                        updated_at
+                    )
+                    VALUES (?, 1, ?, ?, ?, ?)
+                    ON CONFLICT(customer_id) DO UPDATE SET
+                        requests = requests + 1,
+                        continue_count = continue_count + excluded.continue_count,
+                        stop_count = stop_count + excluded.stop_count,
+                        estimated_avoided_cost = (
+                            estimated_avoided_cost + excluded.estimated_avoided_cost
+                        ),
+                        updated_at = excluded.updated_at
+                    """,
+                    (
+                        customer_id,
+                        continue_inc,
+                        stop_inc,
+                        estimated_avoided_cost,
+                        int(time.time()),
+                    ),
+                )
+                conn.commit()
+
+    def _read_usage(self, customer_id: str) -> tuple[dict[str, float], str]:
+        db_path = self._db_path()
+        if not db_path:
+            with self._lock:
+                return dict(self._usage[customer_id]), "in_memory_pilot_only"
+
+        self._ensure_db(db_path)
+        with self._lock:
+            with sqlite3.connect(db_path, timeout=5.0) as conn:
+                row = conn.execute(
+                    """
+                    SELECT requests, continue_count, stop_count, estimated_avoided_cost
+                    FROM usage
+                    WHERE customer_id = ?
+                    """,
+                    (customer_id,),
+                ).fetchone()
+
+        if row is None:
+            return {
+                "requests": 0,
+                "continue": 0,
+                "stop": 0,
+                "estimated_avoided_cost": 0.0,
+            }, "sqlite_persistent"
+
+        return {
+            "requests": int(row[0]),
+            "continue": int(row[1]),
+            "stop": int(row[2]),
+            "estimated_avoided_cost": float(row[3]),
+        }, "sqlite_persistent"
 
     def authenticate(self, supplied_key: str | None) -> AuthContext:
         configured = self._configured_keys()
@@ -100,18 +207,22 @@ class PilotGateway:
         else:
             decision = decide(predicted_gain, next_step_cost, margin)
             net_value = predicted_gain - next_step_cost - margin
-            reason = "expected_gain_exceeds_cost" if decision == "CONTINUE" else "expected_gain_not_worth_cost"
+            reason = (
+                "expected_gain_exceeds_cost"
+                if decision == "CONTINUE"
+                else "expected_gain_not_worth_cost"
+            )
 
         remaining_after_current = max(0, max_steps - step_index)
         estimated_avoided_cost = (
             next_step_cost * remaining_after_current if decision == "STOP" else 0.0
         )
 
-        with self._lock:
-            row = self._usage[customer_id]
-            row["requests"] += 1
-            row["continue" if decision == "CONTINUE" else "stop"] += 1
-            row["estimated_avoided_cost"] += estimated_avoided_cost
+        self._record_usage(
+            customer_id=customer_id,
+            decision=decision,
+            estimated_avoided_cost=estimated_avoided_cost,
+        )
 
         return {
             "decision": decision,
@@ -122,8 +233,7 @@ class PilotGateway:
         }
 
     def usage(self, customer_id: str) -> dict:
-        with self._lock:
-            row = dict(self._usage[customer_id])
+        row, persistence = self._read_usage(customer_id)
         requests = int(row["requests"])
         stop = int(row["stop"])
         return {
@@ -133,7 +243,7 @@ class PilotGateway:
             "stop": stop,
             "stop_rate": round(stop / requests, 6) if requests else 0.0,
             "estimated_avoided_cost": round(float(row["estimated_avoided_cost"]), 8),
-            "persistence": "in_memory_pilot_only",
+            "persistence": persistence,
         }
 
 
