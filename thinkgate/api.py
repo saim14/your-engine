@@ -112,6 +112,24 @@ def provision_customer(
     }
 
 
+@app.delete("/api/v1/admin/customers/{customer_id}")
+def revoke_customer(
+    customer_id: str,
+    x_thinkgate_admin_key: str | None = Header(
+        default=None,
+        alias="X-ThinkGate-Admin-Key",
+    ),
+) -> dict:
+    _auth_admin(x_thinkgate_admin_key)
+    try:
+        result = gateway.revoke_customer(customer_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {"api_version": "v1", **result}
+
+
 @app.post("/api/v1/decision")
 def production_decision(
     payload: DecisionRequest,
