@@ -1,0 +1,509 @@
+{
+  "benchmark": "thinkgate-scientific-benchmark-v1",
+  "frozen_at": "2026-10-08T14:00:00+06:00",
+  "protocol": {
+    "temperature": 0,
+    "max_attempts": 4,
+    "task_count": 60,
+    "stores_private_reasoning": false
+  },
+  "split": {
+    "train": 36,
+    "tune": 12,
+    "test": 12
+  },
+  "adequacy": {
+    "min_positive_gain_rate": 0.2,
+    "min_test_positive_gain_transitions": 8,
+    "min_test_wrong_then_correct_tasks": 3
+  },
+  "gates": {
+    "max_accuracy_drop_pp": 1,
+    "min_compute_reduction": 0.2,
+    "min_utility_improvement_vs_fixed_2": 0,
+    "min_continuation_recall": 0.8,
+    "min_stop_precision": 0.8
+  },
+  "tasks": [
+    {
+      "id": "tg-v1-001",
+      "difficulty": "easy",
+      "category": "weighted-sum",
+      "split": "train",
+      "prompt": "Compute exactly: (3 × 5) + (7 × 7) - 12.",
+      "expected_answer": 52
+    },
+    {
+      "id": "tg-v1-002",
+      "difficulty": "easy",
+      "category": "percent-chain",
+      "split": "train",
+      "prompt": "A value starts at 120. Increase it by 15%, then decrease the result by 5%. What is the final value?",
+      "expected_answer": 131.1
+    },
+    {
+      "id": "tg-v1-003",
+      "difficulty": "easy",
+      "category": "linear",
+      "split": "train",
+      "prompt": "Solve for x: 8x + 6 = 4x + 26.",
+      "expected_answer": 5
+    },
+    {
+      "id": "tg-v1-004",
+      "difficulty": "easy",
+      "category": "rate",
+      "split": "tune",
+      "prompt": "A machine makes 56 units in 8 minutes at a constant rate. How many units does it make in 14 minutes?",
+      "expected_answer": 98
+    },
+    {
+      "id": "tg-v1-005",
+      "difficulty": "easy",
+      "category": "mixture",
+      "split": "test",
+      "prompt": "A container has 20 liters of solution at 35% concentration. Add 10 liters of pure solvent. What is the new concentration percentage?",
+      "expected_answer": 23.333333
+    },
+    {
+      "id": "tg-v1-006",
+      "difficulty": "easy",
+      "category": "nested",
+      "split": "train",
+      "prompt": "Compute exactly: ((9 + 8) × (14 - 2) + 0) ÷ 3.",
+      "expected_answer": 68
+    },
+    {
+      "id": "tg-v1-007",
+      "difficulty": "easy",
+      "category": "weighted-sum",
+      "split": "train",
+      "prompt": "Compute exactly: (9 × 6) + (12 × 2) - 20.",
+      "expected_answer": 58
+    },
+    {
+      "id": "tg-v1-008",
+      "difficulty": "easy",
+      "category": "percent-chain",
+      "split": "train",
+      "prompt": "A value starts at 180. Increase it by 20%, then decrease the result by 15%. What is the final value?",
+      "expected_answer": 183.6
+    },
+    {
+      "id": "tg-v1-009",
+      "difficulty": "easy",
+      "category": "linear",
+      "split": "tune",
+      "prompt": "Solve for x: 7x + 12 = 2x + 67.",
+      "expected_answer": 11
+    },
+    {
+      "id": "tg-v1-010",
+      "difficulty": "easy",
+      "category": "rate",
+      "split": "test",
+      "prompt": "A machine makes 78 units in 6 minutes at a constant rate. How many units does it make in 9 minutes?",
+      "expected_answer": 117
+    },
+    {
+      "id": "tg-v1-011",
+      "difficulty": "easy",
+      "category": "mixture",
+      "split": "train",
+      "prompt": "A container has 12 liters of solution at 20% concentration. Add 5 liters of pure solvent. What is the new concentration percentage?",
+      "expected_answer": 14.117647
+    },
+    {
+      "id": "tg-v1-012",
+      "difficulty": "easy",
+      "category": "nested",
+      "split": "train",
+      "prompt": "Compute exactly: ((7 + 7) × (8 - 3) + 2) ÷ 4.",
+      "expected_answer": 18
+    },
+    {
+      "id": "tg-v1-013",
+      "difficulty": "easy",
+      "category": "weighted-sum",
+      "split": "train",
+      "prompt": "Compute exactly: (6 × 7) + (4 × 4) - 11.",
+      "expected_answer": 47
+    },
+    {
+      "id": "tg-v1-014",
+      "difficulty": "easy",
+      "category": "percent-chain",
+      "split": "tune",
+      "prompt": "A value starts at 140. Increase it by 25%, then decrease the result by 5%. What is the final value?",
+      "expected_answer": 166.25
+    },
+    {
+      "id": "tg-v1-015",
+      "difficulty": "easy",
+      "category": "linear",
+      "split": "test",
+      "prompt": "Solve for x: 6x + 7 = 4x + 15.",
+      "expected_answer": 4
+    },
+    {
+      "id": "tg-v1-016",
+      "difficulty": "easy",
+      "category": "rate",
+      "split": "train",
+      "prompt": "A machine makes 28 units in 4 minutes at a constant rate. How many units does it make in 13 minutes?",
+      "expected_answer": 91
+    },
+    {
+      "id": "tg-v1-017",
+      "difficulty": "easy",
+      "category": "mixture",
+      "split": "train",
+      "prompt": "A container has 24 liters of solution at 50% concentration. Add 11 liters of pure solvent. What is the new concentration percentage?",
+      "expected_answer": 34.285714
+    },
+    {
+      "id": "tg-v1-018",
+      "difficulty": "easy",
+      "category": "nested",
+      "split": "train",
+      "prompt": "Compute exactly: ((5 + 6) × (14 - 4) + 0) ÷ 5.",
+      "expected_answer": 22
+    },
+    {
+      "id": "tg-v1-019",
+      "difficulty": "easy",
+      "category": "weighted-sum",
+      "split": "tune",
+      "prompt": "Compute exactly: (3 × 8) + (9 × 6) - 19.",
+      "expected_answer": 59
+    },
+    {
+      "id": "tg-v1-020",
+      "difficulty": "easy",
+      "category": "percent-chain",
+      "split": "test",
+      "prompt": "A value starts at 100. Increase it by 5%, then decrease the result by 15%. What is the final value?",
+      "expected_answer": 89.25
+    },
+    {
+      "id": "tg-v1-021",
+      "difficulty": "medium",
+      "category": "linear",
+      "split": "train",
+      "prompt": "Solve for x: 5x + 13 = 2x + 43. Verify the result before returning the final numeric answer.",
+      "expected_answer": 10
+    },
+    {
+      "id": "tg-v1-022",
+      "difficulty": "medium",
+      "category": "rate",
+      "split": "train",
+      "prompt": "A machine makes 130 units in 10 minutes at a constant rate. How many units does it make in 16 minutes? Verify the result before returning the final numeric answer.",
+      "expected_answer": 208
+    },
+    {
+      "id": "tg-v1-023",
+      "difficulty": "medium",
+      "category": "mixture",
+      "split": "train",
+      "prompt": "A container has 16 liters of solution at 35% concentration. Add 6 liters of pure solvent. What is the new concentration percentage? Verify the result before returning the final numeric answer.",
+      "expected_answer": 25.454545
+    },
+    {
+      "id": "tg-v1-024",
+      "difficulty": "medium",
+      "category": "nested",
+      "split": "tune",
+      "prompt": "Compute exactly: ((3 + 5) × (8 - 5) + 0) ÷ 6. Verify the result before returning the final numeric answer.",
+      "expected_answer": 4
+    },
+    {
+      "id": "tg-v1-025",
+      "difficulty": "medium",
+      "category": "weighted-sum",
+      "split": "test",
+      "prompt": "Compute exactly: (9 × 9) + (14 × 8) - 10. Verify the result before returning the final numeric answer.",
+      "expected_answer": 183
+    },
+    {
+      "id": "tg-v1-026",
+      "difficulty": "medium",
+      "category": "percent-chain",
+      "split": "train",
+      "prompt": "A value starts at 160. Increase it by 10%, then decrease the result by 5%. What is the final value? Verify the result before returning the final numeric answer.",
+      "expected_answer": 167.2
+    },
+    {
+      "id": "tg-v1-027",
+      "difficulty": "medium",
+      "category": "linear",
+      "split": "train",
+      "prompt": "Solve for x: 11x + 8 = 4x + 29. Verify the result before returning the final numeric answer.",
+      "expected_answer": 3
+    },
+    {
+      "id": "tg-v1-028",
+      "difficulty": "medium",
+      "category": "rate",
+      "split": "train",
+      "prompt": "A machine makes 56 units in 8 minutes at a constant rate. How many units does it make in 11 minutes? Verify the result before returning the final numeric answer.",
+      "expected_answer": 77
+    },
+    {
+      "id": "tg-v1-029",
+      "difficulty": "medium",
+      "category": "mixture",
+      "split": "tune",
+      "prompt": "A container has 28 liters of solution at 20% concentration. Add 12 liters of pure solvent. What is the new concentration percentage? Verify the result before returning the final numeric answer.",
+      "expected_answer": 14
+    },
+    {
+      "id": "tg-v1-030",
+      "difficulty": "medium",
+      "category": "nested",
+      "split": "test",
+      "prompt": "Compute exactly: ((9 + 4) × (14 - 1) + 1) ÷ 2. Verify the result before returning the final numeric answer.",
+      "expected_answer": 85
+    },
+    {
+      "id": "tg-v1-031",
+      "difficulty": "medium",
+      "category": "weighted-sum",
+      "split": "train",
+      "prompt": "Compute exactly: (6 × 10) + (6 × 3) - 18. Verify the result before returning the final numeric answer.",
+      "expected_answer": 60
+    },
+    {
+      "id": "tg-v1-032",
+      "difficulty": "medium",
+      "category": "percent-chain",
+      "split": "train",
+      "prompt": "A value starts at 120. Increase it by 15%, then decrease the result by 15%. What is the final value? Verify the result before returning the final numeric answer.",
+      "expected_answer": 117.3
+    },
+    {
+      "id": "tg-v1-033",
+      "difficulty": "medium",
+      "category": "linear",
+      "split": "train",
+      "prompt": "Solve for x: 10x + 3 = 2x + 75. Verify the result before returning the final numeric answer.",
+      "expected_answer": 9
+    },
+    {
+      "id": "tg-v1-034",
+      "difficulty": "medium",
+      "category": "rate",
+      "split": "tune",
+      "prompt": "A machine makes 78 units in 6 minutes at a constant rate. How many units does it make in 15 minutes? Verify the result before returning the final numeric answer.",
+      "expected_answer": 195
+    },
+    {
+      "id": "tg-v1-035",
+      "difficulty": "medium",
+      "category": "mixture",
+      "split": "test",
+      "prompt": "A container has 20 liters of solution at 50% concentration. Add 7 liters of pure solvent. What is the new concentration percentage? Verify the result before returning the final numeric answer.",
+      "expected_answer": 37.037037
+    },
+    {
+      "id": "tg-v1-036",
+      "difficulty": "medium",
+      "category": "nested",
+      "split": "train",
+      "prompt": "Compute exactly: ((7 + 3) × (8 - 2) + 0) ÷ 3. Verify the result before returning the final numeric answer.",
+      "expected_answer": 20
+    },
+    {
+      "id": "tg-v1-037",
+      "difficulty": "medium",
+      "category": "weighted-sum",
+      "split": "train",
+      "prompt": "Compute exactly: (3 × 11) + (11 × 5) - 9. Verify the result before returning the final numeric answer.",
+      "expected_answer": 79
+    },
+    {
+      "id": "tg-v1-038",
+      "difficulty": "medium",
+      "category": "percent-chain",
+      "split": "train",
+      "prompt": "A value starts at 180. Increase it by 20%, then decrease the result by 5%. What is the final value? Verify the result before returning the final numeric answer.",
+      "expected_answer": 205.2
+    },
+    {
+      "id": "tg-v1-039",
+      "difficulty": "medium",
+      "category": "linear",
+      "split": "tune",
+      "prompt": "Solve for x: 9x + 9 = 4x + 19. Verify the result before returning the final numeric answer.",
+      "expected_answer": 2
+    },
+    {
+      "id": "tg-v1-040",
+      "difficulty": "medium",
+      "category": "rate",
+      "split": "test",
+      "prompt": "A machine makes 28 units in 4 minutes at a constant rate. How many units does it make in 10 minutes? Verify the result before returning the final numeric answer.",
+      "expected_answer": 70
+    },
+    {
+      "id": "tg-v1-041",
+      "difficulty": "hard",
+      "category": "mixture",
+      "split": "train",
+      "prompt": "A container has 12 liters of solution at 35% concentration. Add 13 liters of pure solvent. What is the new concentration percentage? Verify the result before returning the final numeric answer.",
+      "expected_answer": 16.8
+    },
+    {
+      "id": "tg-v1-042",
+      "difficulty": "hard",
+      "category": "nested",
+      "split": "train",
+      "prompt": "Compute exactly: ((5 + 2) × (14 - 3) + 3) ÷ 4. Verify the result before returning the final numeric answer.",
+      "expected_answer": 20
+    },
+    {
+      "id": "tg-v1-043",
+      "difficulty": "hard",
+      "category": "weighted-sum",
+      "split": "train",
+      "prompt": "Compute exactly: (9 × 12) + (16 × 7) - 17. Verify the result before returning the final numeric answer.",
+      "expected_answer": 203
+    },
+    {
+      "id": "tg-v1-044",
+      "difficulty": "hard",
+      "category": "percent-chain",
+      "split": "tune",
+      "prompt": "A value starts at 140. Increase it by 25%, then decrease the result by 15%. What is the final value? Verify the result before returning the final numeric answer.",
+      "expected_answer": 148.75
+    },
+    {
+      "id": "tg-v1-045",
+      "difficulty": "hard",
+      "category": "linear",
+      "split": "test",
+      "prompt": "Solve for x: 8x + 4 = 2x + 52. Verify the result before returning the final numeric answer.",
+      "expected_answer": 8
+    },
+    {
+      "id": "tg-v1-046",
+      "difficulty": "hard",
+      "category": "rate",
+      "split": "train",
+      "prompt": "A machine makes 130 units in 10 minutes at a constant rate. How many units does it make in 13 minutes? Verify the result before returning the final numeric answer.",
+      "expected_answer": 169
+    },
+    {
+      "id": "tg-v1-047",
+      "difficulty": "hard",
+      "category": "mixture",
+      "split": "train",
+      "prompt": "A container has 24 liters of solution at 20% concentration. Add 8 liters of pure solvent. What is the new concentration percentage? Verify the result before returning the final numeric answer.",
+      "expected_answer": 15
+    },
+    {
+      "id": "tg-v1-048",
+      "difficulty": "hard",
+      "category": "nested",
+      "split": "train",
+      "prompt": "Compute exactly: ((3 + 8) × (8 - 4) + 1) ÷ 5. Verify the result before returning the final numeric answer.",
+      "expected_answer": 9
+    },
+    {
+      "id": "tg-v1-049",
+      "difficulty": "hard",
+      "category": "weighted-sum",
+      "split": "tune",
+      "prompt": "Compute exactly: (6 × 13) + (8 × 2) - 8. Verify the result before returning the final numeric answer.",
+      "expected_answer": 86
+    },
+    {
+      "id": "tg-v1-050",
+      "difficulty": "hard",
+      "category": "percent-chain",
+      "split": "test",
+      "prompt": "A value starts at 100. Increase it by 5%, then decrease the result by 5%. What is the final value? Verify the result before returning the final numeric answer.",
+      "expected_answer": 99.75
+    },
+    {
+      "id": "tg-v1-051",
+      "difficulty": "hard",
+      "category": "linear",
+      "split": "train",
+      "prompt": "Solve for x: 7x + 10 = 4x + 52. Verify the result before returning the final numeric answer.",
+      "expected_answer": 14
+    },
+    {
+      "id": "tg-v1-052",
+      "difficulty": "hard",
+      "category": "rate",
+      "split": "train",
+      "prompt": "A machine makes 56 units in 8 minutes at a constant rate. How many units does it make in 17 minutes? Verify the result before returning the final numeric answer.",
+      "expected_answer": 119
+    },
+    {
+      "id": "tg-v1-053",
+      "difficulty": "hard",
+      "category": "mixture",
+      "split": "train",
+      "prompt": "A container has 16 liters of solution at 50% concentration. Add 14 liters of pure solvent. What is the new concentration percentage? Verify the result before returning the final numeric answer.",
+      "expected_answer": 26.666667
+    },
+    {
+      "id": "tg-v1-054",
+      "difficulty": "hard",
+      "category": "nested",
+      "split": "tune",
+      "prompt": "Compute exactly: ((9 + 7) × (14 - 5) + 0) ÷ 6. Verify the result before returning the final numeric answer.",
+      "expected_answer": 24
+    },
+    {
+      "id": "tg-v1-055",
+      "difficulty": "hard",
+      "category": "weighted-sum",
+      "split": "test",
+      "prompt": "Compute exactly: (3 × 3) + (13 × 4) - 16. Verify the result before returning the final numeric answer.",
+      "expected_answer": 45
+    },
+    {
+      "id": "tg-v1-056",
+      "difficulty": "hard",
+      "category": "percent-chain",
+      "split": "train",
+      "prompt": "A value starts at 160. Increase it by 10%, then decrease the result by 15%. What is the final value? Verify the result before returning the final numeric answer.",
+      "expected_answer": 149.6
+    },
+    {
+      "id": "tg-v1-057",
+      "difficulty": "hard",
+      "category": "linear",
+      "split": "train",
+      "prompt": "Solve for x: 6x + 5 = 2x + 33. Verify the result before returning the final numeric answer.",
+      "expected_answer": 7
+    },
+    {
+      "id": "tg-v1-058",
+      "difficulty": "hard",
+      "category": "rate",
+      "split": "train",
+      "prompt": "A machine makes 78 units in 6 minutes at a constant rate. How many units does it make in 12 minutes? Verify the result before returning the final numeric answer.",
+      "expected_answer": 156
+    },
+    {
+      "id": "tg-v1-059",
+      "difficulty": "hard",
+      "category": "mixture",
+      "split": "tune",
+      "prompt": "A container has 28 liters of solution at 35% concentration. Add 9 liters of pure solvent. What is the new concentration percentage? Verify the result before returning the final numeric answer.",
+      "expected_answer": 26.486486
+    },
+    {
+      "id": "tg-v1-060",
+      "difficulty": "hard",
+      "category": "nested",
+      "split": "test",
+      "prompt": "Compute exactly: ((7 + 6) × (8 - 1) + 1) ÷ 2. Verify the result before returning the final numeric answer.",
+      "expected_answer": 46
+    }
+  ]
+}
