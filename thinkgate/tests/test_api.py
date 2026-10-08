@@ -1,8 +1,12 @@
+import os
+import tempfile
 import unittest
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
 from api import app
+from thinkgate.production import PilotGateway
 
 
 class ApiTests(unittest.TestCase):
@@ -147,6 +151,27 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(data["api_version"], "v1")
         self.assertGreaterEqual(data["requests"], 1)
         self.assertEqual(data["persistence"], "in_memory_pilot_only")
+
+    def test_persistent_usage_survives_gateway_recreation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db_path = os.path.join(tmp, "usage.db")
+            with patch.dict(os.environ, {"THINKGATE_USAGE_DB_PATH": db_path}, clear=False):
+                first = PilotGateway()
+                first.make_decision(
+                    customer_id="pilot-a",
+                    predicted_gain=0.01,
+                    next_step_cost=0.10,
+                    margin=0.0,
+                    step_index=1,
+                    max_steps=4,
+                )
+                second = PilotGateway()
+                usage = second.usage("pilot-a")
+
+        self.assertEqual(usage["requests"], 1)
+        self.assertEqual(usage["stop"], 1)
+        self.assertEqual(usage["persistence"], "sqlite_persistent")
+        self.assertGreater(usage["estimated_avoided_cost"], 0.0)
 
 
 if __name__ == "__main__":
