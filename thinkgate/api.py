@@ -10,7 +10,6 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from thinkgate.auth_smoke import start_auth_smoke_background
 from thinkgate.calibration import calibrate_and_evaluate
 from thinkgate.evaluation import evaluate_experiment
 from thinkgate.pilot_runner import start_pilot_background
@@ -264,5 +263,3 @@ def maybe_start_hf_pilot() -> None:
     import os
     if os.environ.get("THINKGATE_RUN_PILOT") == "1":
         start_pilot_background()
-    if os.environ.get("THINKGATE_RUN_AUTH_SMOKE") == "1":
-        start_auth_smoke_background()
