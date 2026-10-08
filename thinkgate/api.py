@@ -2,15 +2,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from thinkgate.calibration import calibrate_and_evaluate
 from thinkgate.evaluation import evaluate_experiment
-from thinkgate.real_traces import to_evaluator_trace, validate_dataset
 from thinkgate.pilot_runner import start_pilot_background
+from thinkgate.production import gateway
+from thinkgate.real_traces import to_evaluator_trace, validate_dataset
 
 
 class Step(BaseModel):
@@ -30,10 +31,20 @@ class EvaluateRequest(BaseModel):
     margin: float = 0.0
 
 
+class DecisionRequest(BaseModel):
+    predicted_gain: float = Field(description="Expected quality/utility gain from one more step")
+    next_step_cost: float = Field(ge=0.0, description="Normalized cost of the next inference step")
+    margin: float = Field(default=0.0, description="Safety margin required before continuing")
+    current_quality: float | None = Field(default=None, ge=0.0, le=1.0)
+    step_index: int = Field(default=1, ge=1)
+    max_steps: int = Field(default=4, ge=1)
+    trace_id: str | None = Field(default=None, max_length=128)
+
+
 app = FastAPI(
     title="ThinkGate",
-    version="0.3.0",
-    description="Adaptive compute stop/continue evaluator with calibrated real-trace collection",
+    version="0.4.0",
+    description="Adaptive reasoning control for production AI plus reproducible evaluation tooling",
 )
 
 static_dir = Path(__file__).parent / "web"
@@ -47,7 +58,57 @@ def home() -> FileResponse:
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok", "service": "thinkgate", "version": "0.3.0"}
+    return {"status": "ok", "service": "thinkgate", "version": "0.4.0"}
+
+
+def _auth_customer(x_thinkgate_key: str | None):
+    try:
+        context = gateway.authenticate(x_thinkgate_key)
+        gateway.enforce_rate_limit(context.customer_id)
+        return context
+    except PermissionError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=429, detail=str(exc)) from exc
+
+
+@app.post("/api/v1/decision")
+def production_decision(
+    payload: DecisionRequest,
+    x_thinkgate_key: str | None = Header(default=None, alias="X-ThinkGate-Key"),
+) -> dict:
+    context = _auth_customer(x_thinkgate_key)
+    try:
+        result = gateway.make_decision(
+            customer_id=context.customer_id,
+            predicted_gain=payload.predicted_gain,
+            next_step_cost=payload.next_step_cost,
+            margin=payload.margin,
+            step_index=payload.step_index,
+            max_steps=payload.max_steps,
+        )
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {
+        "api_version": "v1",
+        "customer_mode": "sandbox" if context.sandbox else "pilot",
+        "trace_id": payload.trace_id,
+        "current_quality": payload.current_quality,
+        **result,
+    }
+
+
+@app.get("/api/v1/usage")
+def production_usage(
+    x_thinkgate_key: str | None = Header(default=None, alias="X-ThinkGate-Key"),
+) -> dict:
+    context = _auth_customer(x_thinkgate_key)
+    return {
+        "api_version": "v1",
+        "customer_mode": "sandbox" if context.sandbox else "pilot",
+        **gateway.usage(context.customer_id),
+    }
 
 
 @app.post("/api/evaluate")
@@ -112,8 +173,6 @@ def collection_protocol() -> dict:
         "optional_env": ["THINKGATE_BASE_URL", "THINKGATE_MAX_STEPS"],
         "claim_policy": "Pilot traces validate the collection and calibration pipeline; they are not broad evidence of general adaptive-compute performance.",
     }
-
-
 
 
 @app.on_event("startup")
