@@ -112,5 +112,42 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(data["benchmark_tasks"], 30)
 
 
+    def test_production_decision_sandbox(self):
+        response = self.client.post(
+            "/api/v1/decision",
+            json={
+                "predicted_gain": 0.01,
+                "next_step_cost": 0.10,
+                "margin": 0.0,
+                "current_quality": 0.8,
+                "step_index": 1,
+                "max_steps": 4,
+                "trace_id": "api-test-1",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["api_version"], "v1")
+        self.assertEqual(data["decision"], "STOP")
+        self.assertEqual(data["trace_id"], "api-test-1")
+
+    def test_production_usage_sandbox(self):
+        self.client.post(
+            "/api/v1/decision",
+            json={
+                "predicted_gain": 0.20,
+                "next_step_cost": 0.05,
+                "step_index": 1,
+                "max_steps": 4,
+            },
+        )
+        response = self.client.get("/api/v1/usage")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["api_version"], "v1")
+        self.assertGreaterEqual(data["requests"], 1)
+        self.assertEqual(data["persistence"], "in_memory_pilot_only")
+
+
 if __name__ == "__main__":
     unittest.main()
