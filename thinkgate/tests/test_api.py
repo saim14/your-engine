@@ -197,6 +197,59 @@ class ApiTests(unittest.TestCase):
                 self.assertEqual(data["metering_source"], "sqlite_usage_events")
                 self.assertEqual(data["estimated_charge_usd"], 0.01)
 
+    def test_production_requires_key_when_anonymous_sandbox_disabled(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db_path = os.path.join(tmp, "auth.db")
+            env = {
+                "THINKGATE_USAGE_DB_PATH": db_path,
+                "THINKGATE_ALLOW_ANONYMOUS_SANDBOX": "0",
+            }
+            with patch.dict(os.environ, env, clear=False):
+                response = self.client.post(
+                    "/api/v1/decision",
+                    json={
+                        "predicted_gain": 0.01,
+                        "next_step_cost": 0.10,
+                        "step_index": 1,
+                        "max_steps": 4,
+                    },
+                )
+        self.assertEqual(response.status_code, 401)
+
+    def test_revoked_customer_key_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db_path = os.path.join(tmp, "revoke.db")
+            env = {
+                "THINKGATE_USAGE_DB_PATH": db_path,
+                "THINKGATE_ADMIN_KEY": "admin-test-secret",
+                "THINKGATE_ALLOW_ANONYMOUS_SANDBOX": "0",
+            }
+            with patch.dict(os.environ, env, clear=False):
+                provision = self.client.post(
+                    "/api/v1/admin/customers",
+                    headers={"X-ThinkGate-Admin-Key": "admin-test-secret"},
+                    json={"customer_id": "pilot-revoke"},
+                )
+                api_key = provision.json()["api_key"]
+
+                revoke = self.client.delete(
+                    "/api/v1/admin/customers/pilot-revoke",
+                    headers={"X-ThinkGate-Admin-Key": "admin-test-secret"},
+                )
+                self.assertEqual(revoke.status_code, 200)
+
+                decision = self.client.post(
+                    "/api/v1/decision",
+                    headers={"X-ThinkGate-Key": api_key},
+                    json={
+                        "predicted_gain": 0.01,
+                        "next_step_cost": 0.10,
+                        "step_index": 1,
+                        "max_steps": 4,
+                    },
+                )
+        self.assertEqual(decision.status_code, 401)
+
     def test_persistent_usage_survives_gateway_recreation(self):
         with tempfile.TemporaryDirectory() as tmp:
             db_path = os.path.join(tmp, "usage.db")
