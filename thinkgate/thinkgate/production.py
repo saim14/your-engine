@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import hashlib
 import hmac
 import os
+import secrets
 import sqlite3
 import time
 from collections import defaultdict, deque
@@ -19,11 +21,12 @@ class AuthContext:
 
 
 class PilotGateway:
-    """Small production gateway for ThinkGate pilots.
+    """Production gateway for ThinkGate pilots.
 
-    Authentication and rate limiting remain in-process. Usage metering is
-    persisted to SQLite when THINKGATE_USAGE_DB_PATH is configured; otherwise
-    it falls back to in-memory counters for local development and tests.
+    Customer authentication supports persistent provisioned keys plus the
+    legacy THINKGATE_CUSTOMER_KEYS environment variable. Metering is persisted
+    to SQLite when THINKGATE_USAGE_DB_PATH is configured; otherwise tests and
+    local development use in-memory counters.
     """
 
     def __init__(self) -> None:
@@ -60,6 +63,10 @@ class PilotGateway:
         value = os.environ.get("THINKGATE_USAGE_DB_PATH", "").strip()
         return value or None
 
+    @staticmethod
+    def _hash_key(key: str) -> str:
+        return hashlib.sha256(key.encode("utf-8")).hexdigest()
+
     def _ensure_db(self, db_path: str) -> None:
         path = Path(db_path)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -76,7 +83,87 @@ class PilotGateway:
                 )
                 """
             )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS usage_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    customer_id TEXT NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    decision TEXT NOT NULL,
+                    estimated_avoided_cost REAL NOT NULL DEFAULT 0.0
+                )
+                """
+            )
+            conn.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_usage_events_customer_time
+                ON usage_events(customer_id, created_at)
+                """
+            )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS customers (
+                    customer_id TEXT PRIMARY KEY,
+                    api_key_hash TEXT NOT NULL UNIQUE,
+                    status TEXT NOT NULL DEFAULT 'active',
+                    created_at INTEGER NOT NULL
+                )
+                """
+            )
             conn.commit()
+
+    def provision_customer(self, customer_id: str) -> dict:
+        customer_id = customer_id.strip()
+        if not customer_id:
+            raise ValueError("customer_id is required")
+        if len(customer_id) > 80:
+            raise ValueError("customer_id must be <= 80 characters")
+        db_path = self._db_path()
+        if not db_path:
+            raise RuntimeError("persistent database is required for provisioning")
+
+        self._ensure_db(db_path)
+        api_key = "tg_" + secrets.token_urlsafe(32)
+        key_hash = self._hash_key(api_key)
+        now = int(time.time())
+        with self._lock:
+            with sqlite3.connect(db_path, timeout=5.0) as conn:
+                existing = conn.execute(
+                    "SELECT 1 FROM customers WHERE customer_id = ?",
+                    (customer_id,),
+                ).fetchone()
+                if existing:
+                    raise ValueError("customer_id already exists")
+                conn.execute(
+                    """
+                    INSERT INTO customers(customer_id, api_key_hash, status, created_at)
+                    VALUES (?, ?, 'active', ?)
+                    """,
+                    (customer_id, key_hash, now),
+                )
+                conn.commit()
+        return {
+            "customer_id": customer_id,
+            "api_key": api_key,
+            "created_at": now,
+        }
+
+    def _persistent_customer_for_key(self, supplied_key: str) -> str | None:
+        db_path = self._db_path()
+        if not db_path:
+            return None
+        self._ensure_db(db_path)
+        key_hash = self._hash_key(supplied_key)
+        with sqlite3.connect(db_path, timeout=5.0) as conn:
+            row = conn.execute(
+                """
+                SELECT customer_id
+                FROM customers
+                WHERE api_key_hash = ? AND status = 'active'
+                """,
+                (key_hash,),
+            ).fetchone()
+        return str(row[0]) if row else None
 
     def _record_usage(
         self,
@@ -97,6 +184,7 @@ class PilotGateway:
         self._ensure_db(db_path)
         continue_inc = 1 if decision == "CONTINUE" else 0
         stop_inc = 1 if decision == "STOP" else 0
+        now = int(time.time())
         with self._lock:
             with sqlite3.connect(db_path, timeout=5.0) as conn:
                 conn.execute(
@@ -124,8 +212,20 @@ class PilotGateway:
                         continue_inc,
                         stop_inc,
                         estimated_avoided_cost,
-                        int(time.time()),
+                        now,
                     ),
+                )
+                conn.execute(
+                    """
+                    INSERT INTO usage_events(
+                        customer_id,
+                        created_at,
+                        decision,
+                        estimated_avoided_cost
+                    )
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (customer_id, now, decision, estimated_avoided_cost),
                 )
                 conn.commit()
 
@@ -164,10 +264,19 @@ class PilotGateway:
 
     def authenticate(self, supplied_key: str | None) -> AuthContext:
         configured = self._configured_keys()
-        if not configured:
+        db_path = self._db_path()
+
+        if not configured and not db_path:
             return AuthContext(customer_id="sandbox", sandbox=True)
         if not supplied_key:
+            if not configured:
+                return AuthContext(customer_id="sandbox", sandbox=True)
             raise PermissionError("missing X-ThinkGate-Key")
+
+        persistent_customer = self._persistent_customer_for_key(supplied_key)
+        if persistent_customer:
+            return AuthContext(customer_id=persistent_customer, sandbox=False)
+
         for customer_id, expected in configured.items():
             if hmac.compare_digest(supplied_key, expected):
                 return AuthContext(customer_id=customer_id, sandbox=False)
@@ -244,6 +353,60 @@ class PilotGateway:
             "stop_rate": round(stop / requests, 6) if requests else 0.0,
             "estimated_avoided_cost": round(float(row["estimated_avoided_cost"]), 8),
             "persistence": persistence,
+        }
+
+    def billing_summary(
+        self,
+        customer_id: str,
+        *,
+        start_ts: int,
+        end_ts: int,
+    ) -> dict:
+        if start_ts < 0 or end_ts <= start_ts:
+            raise ValueError("end_ts must be greater than start_ts")
+        db_path = self._db_path()
+        if not db_path:
+            raise RuntimeError("persistent database is required for billing summaries")
+
+        self._ensure_db(db_path)
+        with sqlite3.connect(db_path, timeout=5.0) as conn:
+            row = conn.execute(
+                """
+                SELECT
+                    COUNT(*),
+                    SUM(CASE WHEN decision = 'CONTINUE' THEN 1 ELSE 0 END),
+                    SUM(CASE WHEN decision = 'STOP' THEN 1 ELSE 0 END),
+                    COALESCE(SUM(estimated_avoided_cost), 0.0)
+                FROM usage_events
+                WHERE customer_id = ?
+                  AND created_at >= ?
+                  AND created_at < ?
+                """,
+                (customer_id, start_ts, end_ts),
+            ).fetchone()
+
+        requests = int(row[0] or 0)
+        continue_count = int(row[1] or 0)
+        stop_count = int(row[2] or 0)
+        avoided = float(row[3] or 0.0)
+        price_per_1000 = max(
+            0.0,
+            float(os.environ.get("THINKGATE_PRICE_PER_1000_DECISIONS", "0")),
+        )
+        estimated_charge = requests * price_per_1000 / 1000.0
+        return {
+            "customer_id": customer_id,
+            "period_start": start_ts,
+            "period_end": end_ts,
+            "requests": requests,
+            "billable_decisions": requests,
+            "continue": continue_count,
+            "stop": stop_count,
+            "stop_rate": round(stop_count / requests, 6) if requests else 0.0,
+            "estimated_avoided_cost": round(avoided, 8),
+            "price_per_1000_decisions_usd": round(price_per_1000, 6),
+            "estimated_charge_usd": round(estimated_charge, 6),
+            "metering_source": "sqlite_usage_events",
         }
 
 
