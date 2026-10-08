@@ -112,6 +112,30 @@ class PilotGateway:
             )
             conn.commit()
 
+    def revoke_customer(self, customer_id: str) -> dict:
+        customer_id = customer_id.strip()
+        if not customer_id:
+            raise ValueError("customer_id is required")
+        db_path = self._db_path()
+        if not db_path:
+            raise RuntimeError("persistent database is required for revocation")
+
+        self._ensure_db(db_path)
+        with self._lock:
+            with sqlite3.connect(db_path, timeout=5.0) as conn:
+                result = conn.execute(
+                    """
+                    UPDATE customers
+                    SET status = 'revoked'
+                    WHERE customer_id = ? AND status = 'active'
+                    """,
+                    (customer_id,),
+                )
+                conn.commit()
+        if result.rowcount == 0:
+            raise ValueError("active customer_id not found")
+        return {"customer_id": customer_id, "status": "revoked"}
+
     def provision_customer(self, customer_id: str) -> dict:
         customer_id = customer_id.strip()
         if not customer_id:
@@ -265,11 +289,13 @@ class PilotGateway:
     def authenticate(self, supplied_key: str | None) -> AuthContext:
         configured = self._configured_keys()
         db_path = self._db_path()
+        allow_anonymous_sandbox = os.environ.get(
+            "THINKGATE_ALLOW_ANONYMOUS_SANDBOX",
+            "1",
+        ).strip().lower() in {"1", "true", "yes", "on"}
 
-        if not configured and not db_path:
-            return AuthContext(customer_id="sandbox", sandbox=True)
         if not supplied_key:
-            if not configured:
+            if allow_anonymous_sandbox and not configured:
                 return AuthContext(customer_id="sandbox", sandbox=True)
             raise PermissionError("missing X-ThinkGate-Key")
 
