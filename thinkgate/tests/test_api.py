@@ -152,6 +152,51 @@ class ApiTests(unittest.TestCase):
         self.assertGreaterEqual(data["requests"], 1)
         self.assertEqual(data["persistence"], "in_memory_pilot_only")
 
+    def test_pilot_provisioning_and_billing_summary(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db_path = os.path.join(tmp, "billing.db")
+            env = {
+                "THINKGATE_USAGE_DB_PATH": db_path,
+                "THINKGATE_ADMIN_KEY": "admin-test-secret",
+                "THINKGATE_PRICE_PER_1000_DECISIONS": "10",
+            }
+            with patch.dict(os.environ, env, clear=False):
+                provision = self.client.post(
+                    "/api/v1/admin/customers",
+                    headers={"X-ThinkGate-Admin-Key": "admin-test-secret"},
+                    json={"customer_id": "pilot-billing"},
+                )
+                self.assertEqual(provision.status_code, 200)
+                api_key = provision.json()["api_key"]
+                self.assertTrue(api_key.startswith("tg_"))
+
+                decision = self.client.post(
+                    "/api/v1/decision",
+                    headers={"X-ThinkGate-Key": api_key},
+                    json={
+                        "predicted_gain": 0.01,
+                        "next_step_cost": 0.10,
+                        "step_index": 1,
+                        "max_steps": 4,
+                    },
+                )
+                self.assertEqual(decision.status_code, 200)
+                self.assertEqual(decision.json()["customer_mode"], "pilot")
+
+                now = int(__import__("time").time())
+                billing = self.client.get(
+                    "/api/v1/billing-summary",
+                    headers={"X-ThinkGate-Key": api_key},
+                    params={"start_ts": now - 60, "end_ts": now + 60},
+                )
+                self.assertEqual(billing.status_code, 200)
+                data = billing.json()
+                self.assertEqual(data["customer_id"], "pilot-billing")
+                self.assertEqual(data["billable_decisions"], 1)
+                self.assertEqual(data["stop"], 1)
+                self.assertEqual(data["metering_source"], "sqlite_usage_events")
+                self.assertEqual(data["estimated_charge_usd"], 0.01)
+
     def test_persistent_usage_survives_gateway_recreation(self):
         with tempfile.TemporaryDirectory() as tmp:
             db_path = os.path.join(tmp, "usage.db")
